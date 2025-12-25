@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Minesweeper</title>
+<style>
+body { background: #252b4b; color: #fff; font-family: Arial; }
+.ms-board { display: grid; grid-template-columns: repeat(9,31px); gap:2px; margin: 46px auto; width:299px;}
+.ms-cell {
+    width:28px;height:28px; background:#ddf1e2; text-align:center; border-radius:6px; font-size:1.2em; font-weight:bold; 
+    color:#02415c; line-height:28px; cursor:pointer; user-select: none;
+}
+.ms-cell.flag { background: #fdd835; color: #b28900; }
+.ms-cell.revealed { background:#d8d7ff; color:#252b4b;}
+.ms-cell.mine { background:#e32748; color:#fff;}
+h1 { text-align:center; color:#ddf1e2; }
+</style>
+</head>
+<body>
+<h1>Minesweeper</h1>
+<div style="text-align:center;"><button onclick="startMs()">Restart</button> <a href="/">Back to Menu</a></div>
+<div id="ms-status"></div>
+<div class="ms-board" id="ms-board"></div>
+<script>
+let ms = null;
+function startMs() {
+    fetch('/minesweeper/start').then(r=>r.json()).then(data=>{
+        ms = data.state; drawMs();
+        document.getElementById("ms-status").textContent = "";
+    });
+}
+function drawMs() {
+    let b = '';
+    for(let i=0; i<9;i++)
+        for(let j=0;j<9;j++) {
+            let cl = "ms-cell";
+            if(ms.revealed[i][j]) cl+=" revealed";
+            if(ms.flagged[i][j]) cl+=" flag";
+            if(ms.loss && ms.board[i][j]==-1) cl+=" mine";
+            let disp = "";
+            if(ms.loss && ms.board[i][j]==-1) disp="💣";
+            else if(ms.flagged[i][j]) disp="🚩";
+            else if(ms.revealed[i][j] && ms.board[i][j]>0) disp=ms.board[i][j];
+            document.getElementById('ms-status').textContent = ms.win?"You Win!": ms.loss?"Boom! Game Over.":"";
+            b+=`<div class="${cl}" onclick="leftClick(${i},${j})" oncontextmenu="rightClick(event,${i},${j})">${disp}</div>`;
+        }
+    document.getElementById('ms-board').innerHTML = b;
+}
+function leftClick(i,j) {
+    if(ms.win||ms.loss) return;
+    fetch('/minesweeper/click',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({r:i, c:j, button:"left"})
+    }).then(r=>r.json()).then(data=>{ms=data.state;drawMs();});
+}
+function rightClick(e,i,j) {
+    e.preventDefault();
+    if(ms.win||ms.loss) return;
+    fetch('/minesweeper/click',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({r:i, c:j, button:"right"})
+    }).then(r=>r.json()).then(data=>{ms=data.state;drawMs();});
+}
+window.onload = startMs;
+</script>
+</body>
+</html>

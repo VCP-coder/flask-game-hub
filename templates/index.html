@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Hub</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            background: linear-gradient(120deg, #141627 60%, #115058 100%);
+            min-height:100vh;
+        }
+        .menu-panel {
+            max-width: 430px; 
+            margin: 70px auto 0 auto; 
+            background: #24294f;
+            border-radius: 12px; 
+            box-shadow: 0 5px 22px #0004; 
+            padding: 36px 0 28px 0;
+        }
+        .menu-panel h1 {
+            color: #56fcf8;
+            font-size:2.4em;
+            margin-bottom: 24px;
+            text-align:center;
+            letter-spacing:2px;
+        }
+        ul.menu-list { 
+            list-style: none; 
+            margin:0; padding:0; font-size: 1.2em;
+        }
+        ul.menu-list li { 
+            margin: 18px 0; 
+            text-align: center; 
+        }
+        ul.menu-list a { 
+            color: #fdf38f; 
+            text-decoration: none;
+            background: #125c6e;
+            padding:11px 22px;
+            border-radius:7px;
+            font-weight:bold;
+            font-size: 1.05em;
+            transition: background 0.18s, color 0.18s;
+            box-shadow: 0 3px 20px #2222;
+        }
+        ul.menu-list a:hover { 
+            background: #56fcf8; 
+            color: #125c6e;
+        }
+        .footer {
+            text-align:center;
+            color:#a3c3f1;
+            margin-top:50px;
+            font-size:14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-panel">
+        <h1>Game Hub</h1>
+        <ul class="menu-list">
+            <li><a href="/hanoi">Tower of Hanoi</a></li>
+            <li><a href="/tic">Tic-Tac-Toe</a></li>
+            <li><a href="/eight">8-Puzzle</a></li>
+            <li><a href="/water">Water Jug</a></li>
+            <li><a href="/sudoku">Sudoku</a></li>
+            <li><a href="/fifteen">Sliding 15-Puzzle</a></li>
+            <li><a href="/minesweeper">Minesweeper</a></li>
+            <li><a href="/connect4">Connect Four</a></li>
+        </ul>
+    </div>
+    <div class="footer">Made with Flask &hearts; | Project by VCP</div>
+</body>
+</html>

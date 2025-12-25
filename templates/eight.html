@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>8-Puzzle</title>
+    <style>
+        body { background: #191b24; color: #fff; font-family: Arial,sans-serif; }
+        #eight-board { 
+            display: grid; grid-template-columns: repeat(3, 65px); 
+            grid-template-rows: repeat(3, 65px); 
+            gap: 12px; 
+            margin: 50px auto 20px auto; width: 245px;
+            background: #242638; border-radius: 15px; box-shadow: 0 8px 32px #0007;
+        }
+        .tile {
+            width: 65px; height: 65px; font-size: 2.5em; font-weight: bold; 
+            background: #43f1ff; color: #192033; display: flex; 
+            align-items: center; justify-content: center; 
+            border-radius: 12px; box-shadow: 0 2px 6px #0003; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .blank { background: #242638; box-shadow:none; cursor: default; }
+        .tile:hover:not(.blank) { background: #ffc343;}
+        #eight-status { text-align:center; margin:13px 0 24px; font-size:19px;}
+        button, a { font-size:18px; background: #221f39; color:#36e2ff; border:none; border-radius:5px; padding:6px 16px;}
+        button:hover, a:hover { background:#456393;color:#fff;}
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;color:#36e2ff;">8-Puzzle Game</h1>
+    <div style="text-align:center;"><button onclick="startEight()">New Puzzle</button></div>
+    <div id="eight-status"></div>
+    <div id="eight-board"></div>
+    <div style="text-align:center;"><a href="/">Back to Menu</a></div>
+<script>
+let eightState = null;
+
+function startEight() {
+    fetch('/eight/start').then(r=>r.json()).then(data=>{
+        eightState = data.state;
+        document.getElementById('eight-status').textContent = data.message;
+        renderEightBoard();
+    });
+}
+
+function renderEightBoard() {
+    let b = eightState.board;
+    let html = "";
+    for(let i=0;i<3;i++) {
+        for(let j=0;j<3;j++) {
+            let num = b[i][j];
+            html += `<div class="tile${num===0?' blank':''}" onclick="moveEight(${i},${j})">${num!==0?num:""}</div>`;
+        }
+    }
+    document.getElementById('eight-board').innerHTML = html;
+    let statusEl = document.getElementById('eight-status');
+    if(eightState.solved) {
+        statusEl.textContent = `Congratulations! Puzzle Solved in ${eightState.moves} moves.`;
+    } else {
+        statusEl.textContent = `Moves: ${eightState.moves}`;
+    }
+}
+
+function moveEight(i,j) {
+    if(eightState.solved) return;
+    fetch('/eight/move', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({r:i, c:j})
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        eightState = data.state;
+        document.getElementById('eight-status').textContent = data.message;
+        renderEightBoard();
+    });
+}
+
+window.onload = startEight;
+</script>
+</body>
+</html>

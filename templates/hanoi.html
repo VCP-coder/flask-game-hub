@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tower of Hanoi (Interactive)</title>
+    <style>
+        body { background: #181818; font-family: Arial, sans-serif; }
+        #hanoi-board {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            width: 700px; height: 350px; margin: 60px auto;
+        }
+        .peg-column {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+        }
+        .rod {
+            width: 10px; height: 220px; background: #eb5d77; position: absolute; left: 50%; transform: translateX(-50%); bottom: 40px; border-radius:6px;
+        }
+        .base {
+            position: absolute; bottom: 0; left: 15px;
+            width: 170px; height: 14px; background: #eb5d77; border-radius:7px;
+        }
+        .disk {
+            height: 32px; margin-bottom: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; letter-spacing: 1.5px; cursor: pointer;
+            transition: box-shadow 0.2s, background 0.2s;
+            box-shadow: 0 3px 10px #0002;
+            border-radius: 20px;
+        }
+        .disk.selected { box-shadow: 0 0 0 4px #ff0 inset; background: #fad02e !important; }
+        .peg-highlight { outline: 2px solid #fffbb1; }
+        #hanoi-status { color:#fff;text-align:center;margin:24px;}
+        label, input, button { font-size: 18px; margin: 0 3px; }
+        a { color: #eb5d77; text-decoration: none;}
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;color:#eb5d77;">Tower of Hanoi (Interactive)</h1>
+    <div style="text-align:center;margin-top:10px;">
+        <label for="numDisks">Number of rings:</label>
+        <input type="number" id="numDisks" min="2" max="6" value="3">
+        <button onclick="startHanoi()">Start Game</button>
+    </div>
+    <div id="hanoi-status"></div>
+    <div id="hanoi-board"></div>
+    <div style="text-align:center;"><a href="/">Back to Menu</a></div>
+
+    <script>
+        const diskColors = [
+            "#a7f3a9", "#39ee8e", "#dabffb", "#a1dafb", "#fbb1d5", "#ffe69f", "#bfffc6"
+        ];
+        let hanoiState = null;
+        let selected = null; // { peg: "source"|"middle"|"destination", disk: n }
+
+        function startHanoi() {
+            fetch(`/hanoi/start/${document.getElementById('numDisks').value}`)
+            .then(res=>res.json())
+            .then(data=>{
+                hanoiState = data.state;
+                selected = null;
+                document.getElementById('hanoi-status').textContent = data.message;
+                renderBoard(hanoiState);
+            });
+        }
+
+        function renderBoard(state) {
+            const pegs = ["source","middle","destination"];
+            let html = "";
+            for (let peg of pegs) {
+                let disks = state[peg];
+                html += `<div class="peg-column" id="${peg}-col" onclick="tryDrop('${peg}')">`;
+                html += `<div class="base"></div><div class="rod"></div>`;
+                for(let i=disks.length-1;i>=0;i--){
+                    let disk = disks[i];
+                    let topDisk = (i === disks.length-1);
+                    let sel = selected && selected.peg===peg && selected.disk===disk;
+                    let color = diskColors[(disk-1)%diskColors.length];
+                    html += `<div class="disk${sel?' selected':''}" 
+                        data-peg="${peg}" data-disk="${disk}" 
+                        style="width:${disk*39+32}px;background:${color};z-index:${disk};"
+                        ${topDisk?'onclick="pickDisk(event,\''+peg+'\','+disk+')"' : ''}
+                        >${disk}</div>`;
+                }
+                html += `</div>`;
+            }
+            document.getElementById('hanoi-board').innerHTML = html;
+        }
+
+        function pickDisk(evt, peg, disk) {
+            evt.stopPropagation();
+            if (hanoiState[peg][hanoiState[peg].length-1]!==disk) return; // Only top
+            selected = {peg, disk};
+            renderBoard(hanoiState);
+        }
+        function tryDrop(peg) {
+            if(!selected) return;
+            if(selected.peg === peg) {
+                // Deselect
+                selected = null;
+                renderBoard(hanoiState);
+                return;
+            }
+            fetch('/hanoi/move', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({from: selected.peg, to: peg})
+            })
+            .then(res=>res.json())
+            .then(data=>{
+                selected = null;
+                hanoiState = data.state;
+                document.getElementById('hanoi-status').textContent = data.message;
+                renderBoard(hanoiState);
+                if(data.solved) alert("Congratulations! You solved the puzzle!");
+            });
+        }
+        window.onload = startHanoi;
+    </script>
+</body>
+</html>

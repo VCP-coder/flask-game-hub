@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sudoku</title>
+<style>
+body { background: #252b4b; color: #fff; font-family: Arial; }
+.sudoku-board { display: grid; grid-template-columns: repeat(9,32px); gap:3px; margin: 35px auto; width:320px;}
+.sudoku-cell {
+    width:30px;height:30px; background:#20273c; text-align:center; border-radius:6px; 
+    font-size:19px; font-weight:bold; outline:none; color:#42f8f4;
+}
+.sudoku-cell.original { background:#18405d; color:#fff9ae; font-weight:bold;}
+.sudoku-cell:focus { background: #62f2d0;}
+.sudoku-btns { text-align:center; }
+h1 { text-align:center; color:#42f8f4; }
+</style>
+</head>
+<body>
+<h1>Sudoku</h1>
+<div style="text-align:center;"><button onclick="startSudoku()">New Puzzle</button> <a href="/">Back to Menu</a></div>
+<div id="sudoku-status"></div>
+<div class="sudoku-board" id="sudoku-board"></div>
+<script>
+let sudoku = null, original = null, solved = false;
+function startSudoku() {
+    fetch('/sudoku/start').then(r=>r.json()).then(data=>{
+        sudoku = data.state.puzzle; original = data.state.original; solved = data.state.solved;
+        document.getElementById('sudoku-status').textContent = solved?"Solved!":"";
+        draw();
+    });
+}
+function draw() {
+    let b = '', ob = original || sudoku;
+    for(let i=0;i<9;i++)
+        for(let j=0;j<9;j++) {
+            let val = sudoku[i][j]||"";
+            let orig = ob[i][j]!=0;
+            b+=`<input class="sudoku-cell${orig?' original':''}" maxlength="1" id="cell-${i}-${j}" value="${val}" ${orig?'disabled':''} 
+                 onchange="cellSet(${i},${j},this.value)" />`;
+        }
+    document.getElementById('sudoku-board').innerHTML = b;
+}
+function cellSet(i,j,v) {
+    if(!v) return;
+    let num = parseInt(v);
+    fetch('/sudoku/move',{
+       method:'POST',
+       headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({r:i, c:j, num})
+    }).then(r=>r.json()).then(data=>{
+        sudoku = data.state.puzzle; solved = data.state.solved;
+        document.getElementById('sudoku-status').textContent = solved?"Solved!":"";
+        draw();
+    });
+}
+window.onload = startSudoku;
+</script>
+</body>
+</html>

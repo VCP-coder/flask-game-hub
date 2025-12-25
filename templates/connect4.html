@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Connect Four</title>
+<style>
+body { background: #252b4b; color: #fff; font-family: Arial; }
+.c4-board { display:grid; grid-template-columns:repeat(7,48px); margin:50px auto; width:343px; }
+.c4-cell {width:44px;height:44px; background:#364b6e; margin:2px; border-radius:50%; display:flex;justify-content:center;align-items:center; font-size:2em;}
+.c4-cell.r1 {background:#f85c5c;}
+.c4-cell.r2 {background:#65eaff;}
+.c4-droptop { cursor:pointer; background:#995cfe; color:#fff; border-radius:12px; text-align:center; font-size:1.4em; margin-bottom:3px; }
+h1 { text-align:center; color:#65eaff;}
+</style>
+</head>
+<body>
+<h1>Connect Four</h1>
+<div style="text-align:center;"><button onclick="startC4()">New Game</button> <a href="/">Back to Menu</a></div>
+<div id="c4-status"></div>
+<div class="c4-board" id="c4-board"></div>
+<script>
+let c4 = null;
+function startC4() {
+    fetch('/connect4/start').then(r=>r.json()).then(data=>{
+        c4=data.state;drawC4();
+        document.getElementById('c4-status').textContent = c4.winner?`Player ${c4.winner==1?"Red":"Blue"} wins!`:'';
+    });
+}
+function drawC4() {
+    let b = '';
+    for(let col=0;col<7;col++)
+        b+=`<div class="c4-droptop" onclick="doC4Drop(${col})">▼</div>`;
+    for(let i=0;i<6;i++)
+        for(let j=0;j<7;j++) {
+            let cl = "c4-cell";
+            if(c4.board[i][j]==1) cl+=" r1";
+            if(c4.board[i][j]==2) cl+=" r2";
+            b+=`<div class="${cl}"></div>`;
+        }
+    document.getElementById('c4-board').innerHTML = b;
+    document.getElementById('c4-status').textContent = c4.winner?`Player ${c4.winner==1?"Red":"Blue"} wins!`: "Player "+ (c4.turn==1?"Red":"Blue") +"'s Turn";
+}
+function doC4Drop(col) {
+    if(c4.winner) return;
+    fetch('/connect4/move',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({col})
+    }).then(r=>r.json()).then(data=>{
+        c4=data.state; drawC4();
+    });
+}
+window.onload = startC4;
+</script>
+</body>
+</html>

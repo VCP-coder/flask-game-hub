@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic-Tac-Toe</title>
+    <style>
+        body { background: #222; color: #fff; font-family: Arial, sans-serif; }
+        #ttt-board { 
+            display: grid; 
+            grid-template-columns: repeat(3,80px); 
+            grid-gap: 10px; 
+            margin: 50px auto 20px auto; 
+            width: 260px;
+        }
+        .square {
+            width: 80px; height: 80px; background: #444; 
+            font-size: 64px; font-weight: bold;
+            border-radius: 12px; cursor: pointer;
+            box-shadow: 0 3px 8px #0007;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.25s;
+            text-align: center;
+        }
+        .square.x { color:#ff3030; }
+        .square.o { color:#3058ff; }
+        .square:hover { background: #666; }
+        #ttt-status { text-align:center; margin-bottom:30px; font-size:21px;}
+        button, a { font-size:18px; color:#3058ff; background: #282c38; border:none; border-radius:5px; padding:7px 18px;}
+        button:hover, a:hover { background:#444; color:#fff;}
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;color:#3058ff;">Tic-Tac-Toe</h1>
+    <div style="text-align:center;"><button onclick="startTic()">New Game</button></div>
+    <div id="ttt-status"></div>
+    <div id="ttt-board"></div>
+    <div style="text-align:center;"><a href="/">Back to Menu</a></div>
+    <script>
+        let tttState = null;
+
+        function startTic() {
+            fetch('/tic/start').then(r=>r.json()).then(data=>{
+                tttState = data.state;
+                document.getElementById('ttt-status').textContent = data.message;
+                renderTicBoard();
+            });
+        }
+
+        function renderTicBoard() {
+            let b = tttState.board;
+            let html = "";
+            for(let i=0;i<9;i++) {
+                let val = b[i];
+                let extraClass = val ? " " + val.toLowerCase() : "";
+                html += `<div class="square${extraClass}" onclick="clickSquare(${i})">${val||""}</div>`;
+            }
+            document.getElementById('ttt-board').innerHTML = html;
+            let statusEl = document.getElementById('ttt-status');
+            if(tttState.winner) {
+                statusEl.textContent = (tttState.winner=="Draw" ? "It's a draw!" : `Player ${tttState.winner} wins!`);
+            } else {
+                statusEl.textContent = `Player ${tttState.current}'s turn`;
+            }
+        }
+
+        function clickSquare(idx) {
+            if(tttState.winner || tttState.board[idx]) return;
+            fetch('/tic/move', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({pos: idx})
+            })
+            .then(r=>r.json())
+            .then(data=>{
+                tttState = data.state;
+                document.getElementById('ttt-status').textContent = data.message;
+                renderTicBoard();
+            });
+        }
+        window.onload = startTic;
+    </script>
+</body>
+</html>

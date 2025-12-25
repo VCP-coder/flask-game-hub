@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>15-Puzzle</title>
+<style>
+body { background: #252b4b; color: #fff; font-family: Arial; }
+.fifteen-board { display: grid; grid-template-columns: repeat(4,60px); gap:8px; margin: 38px auto; width:285px;}
+.fifteen-cell {
+    width:56px;height:56px; background:#e7eeae; text-align:center; border-radius:10px;
+    font-size:1.8em; font-weight:bold; cursor:pointer; line-height:56px; color:#18405d;
+}
+.fifteen-cell.blank { background: #252b4b !important; cursor: default; }
+h1 { text-align:center; color:#e7eeae; }
+</style>
+</head>
+<body>
+<h1>15-Puzzle</h1>
+<div style="text-align:center;"><button onclick="startFifteen()">New Puzzle</button> <a href="/">Back to Menu</a></div>
+<div id="fifteen-status"></div>
+<div class="fifteen-board" id="fifteen-board"></div>
+<script>
+let fifteen = null;
+function startFifteen() {
+    fetch('/fifteen/start').then(r=>r.json()).then(data=>{
+        fifteen = data.state; draw();
+        document.getElementById('fifteen-status').textContent = data.state.solved ? "Solved!" : "";
+    });
+}
+function draw() {
+    let b = '';
+    for(let i=0; i<4;i++)
+        for(let j=0;j<4;j++) {
+            let val = fifteen.board[i][j];
+            b+=`<div class="fifteen-cell${val==0?' blank':''}" onclick="cellClick(${i},${j})">${val!=0?val:""}</div>`;
+        }
+    document.getElementById('fifteen-board').innerHTML = b;
+    if(fifteen.solved)
+        document.getElementById('fifteen-status').textContent = "Puzzle Solved!";
+}
+function cellClick(i,j) {
+    if(fifteen.solved) return;
+    fetch('/fifteen/move',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({r:i,c:j})
+    }).then(r=>r.json()).then(data=>{
+        fifteen = data.state; draw();
+    });
+}
+window.onload = startFifteen;
+</script>
+</body>
+</html>

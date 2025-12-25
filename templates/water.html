@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Water Jug Problem</title>
+    <style>
+        body { background:#252653; color: #fff; font-family: Arial,sans-serif;}
+        #jug-states { display:flex;justify-content:center;align-items:end;margin:48px 0 24px 0;}
+        .jug { 
+            margin:0 55px; height:180px;width:75px; background:#222342; border-radius:18px; display:flex;flex-direction:column; justify-content:end;align-items:center; 
+            box-shadow: 0 8px 26px #0006;
+        }
+        .water { width:60px; background:#53b4fa; border-radius:12px; text-align:center; color: #002; margin-bottom:6px;}
+        .jug-label {margin:12px 0 9px 0;}
+        #water-status { text-align:center; font-size:19px; margin-bottom:20px;}
+        button, select { font-size:18px; margin:4px 17px; background:#53b4fa; color:#14224d; border:none; border-radius:9px; padding:7px 19px; cursor:pointer;}
+        button:hover, select:hover { background:#89d5fd;}
+        .action-panel { text-align:center; margin-bottom:21px;}
+        a { font-size:17px; color:#53b4fa; text-decoration:none;}
+        a:hover { text-decoration:underline; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;color:#89d5fd;">Water Jug Challenge</h1>
+    <div style="text-align:center;"><button onclick="startWater()">New Game</button></div>
+    <div id="water-status"></div>
+    <div id="jug-states"></div>
+    <div class="action-panel">
+        <label>Action:</label>
+        <select id="water-action">
+            <option value="fill-0">Fill Jug 1</option>
+            <option value="fill-1">Fill Jug 2</option>
+            <option value="empty-0">Empty Jug 1</option>
+            <option value="empty-1">Empty Jug 2</option>
+            <option value="pour-0-1">Pour from Jug 1 to Jug 2</option>
+            <option value="pour-1-0">Pour from Jug 2 to Jug 1</option>
+        </select>
+        <button onclick="doWaterAction()">Do Action</button>
+    </div>
+    <div style="text-align:center;"><a href="/">Back to Menu</a></div>
+<script>
+let waterState = null;
+
+function startWater() {
+    fetch('/water/start').then(r=>r.json()).then(data=>{
+        waterState = data.state;
+        document.getElementById('water-status').textContent = data.message;
+        renderJugs();
+    });
+}
+
+function renderJugs() {
+    let s = waterState.state, c = waterState.capacity;
+    let html = '';
+    for(let i=0;i<2;i++) {
+        let level = Math.round((s[i]/c[i])*145);
+        html += `<div class="jug">
+            <div class="jug-label">Jug ${i+1}<br>Cap: ${c[i]}L</div>
+            <div class="water" style="height:${level}px;">${s[i]} L</div>
+        </div>`;
+    }
+    document.getElementById('jug-states').innerHTML = html;
+    let statusEl = document.getElementById('water-status');
+    if(waterState.solved) {
+        statusEl.textContent = `Congratulations! Target ${waterState.target}L achieved in ${waterState.moves} moves.`;
+    } else {
+        statusEl.textContent = `Current: ${s[0]}L & ${s[1]}L    Target: ${waterState.target}L  Moves: ${waterState.moves}`;
+    }
+}
+
+function doWaterAction() {
+    let sel = document.getElementById('water-action').value;
+    let parts = sel.split('-');
+    let act = parts[0];
+    let idx = act === "pour" ? [parts[1], parts[2]] : parts[1];
+    fetch('/water/action', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({act, idx})
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        waterState = data.state;
+        document.getElementById('water-status').textContent = data.message;
+        renderJugs();
+    });
+}
+window.onload = startWater;
+</script>
+</body>
+</html>
